@@ -9,8 +9,7 @@ __pycache__/
 sounds/
 processed/
 music/
-MeloTTS/
-in/
+VoiceTraining/
 
 # Distribution / packaging
 .Python
