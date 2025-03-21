@@ -1,0 +1,12 @@
+{
+    "app_id": "vbuhhg1itd2pyua5flxgm1hwumllij",
+    "app_secret": "wd6z2qpd2hrasic4u6zefbie46anox",
+    "extension_id": "4o9vi0r89run5k1kuh8xxpuf3g04qo",
+    "twitch_nickname": "SlimeNetwork",
+    "twitch_token": "oauth:l0462s6exzb8i06spjoywd89y7z5q1",
+    "twitch_channel": "slimenetwork",
+    "stream_description": "Testing the bot",
+    "conversation_length": 100,
+    "twitch_events_length": 10,
+    "runAI": true
+}
