@@ -34,6 +34,34 @@ for i in range(1, 100):
 
 out_id = 9
 
+class Sound:
+    def __init__(self, sound):
+        print("Init Sound", sound, file=sys.stderr)
+        if isinstance(sound, dict):
+            self.name = sound.get('name', '')
+            self.source_url = sound.get('source_url', '')
+            self.duration = sound.get('duration', '')
+            self.path = sound.get('path', '')
+            self.approved = sound.get('approved', 0)
+        else:
+            self.name = sound[0]
+            self.source_url = sound[1]
+            self.duration = sound[2]
+            self.path = sound[3]
+            self.approved = sound[4]
+
+    def to_dict(self):
+        return {
+            'name': self.name,
+            'source_url': self.source_url,
+            'duration': self.duration,
+            'path': self.path,
+            'approved': self.approved
+        }
+
+    def __str__(self):
+        return f"{self.name} ({self.duration})"
+
 class Song:
         def __init__(self, song):
             print("Init Song", song, file=sys.stderr)
@@ -146,10 +174,12 @@ def start_api(**kwargs):
     global db
     global paused
     global midi
+    global songQueue
 
     config = kwargs
     conversation = []
     activePeople = {}
+    songQueue = []
     hold = False
     pitch = 1.0
     speed = 1.0
@@ -162,25 +192,21 @@ def start_api(**kwargs):
     paused = False
     midi = {"key": None, "control": None}
 
-    db_music = sqlite3.connect("music.db")
-    c_music = db_music.cursor()
-    c_music.execute('''CREATE TABLE IF NOT EXISTS songs
-             (id text, title text, author text, link text, duration text, path text, thumbnail_url text, thumbnail_path text, dmca_risk integer)''')
-    db_music.commit()
-    db_music.close()
-
-    db_midi = sqlite3.connect("midi.db", check_same_thread=False)
-    c_midi = db_midi.cursor()
-    c_midi.execute('''CREATE TABLE IF NOT EXISTS midi_control_mappings
+    db_stream = sqlite3.connect("db/stream.db", check_same_thread=False)
+    c_stream = db_stream.cursor()
+    c_stream.execute('''CREATE TABLE IF NOT EXISTS songs
+             (id text PRIMARY KEY, title text, author text, link text, duration text, path text, thumbnail_url text, thumbnail_path text, dmca_risk integer, approved integer)''')
+    c_stream.execute('''CREATE TABLE IF NOT EXISTS sounds
+             (name text PRIMARY KEY, source_url text, duration text, path text, approved integer)''')
+    c_stream.execute('''CREATE TABLE IF NOT EXISTS midi_control_mappings
             (control integer PRIMARY KEY, name text)''')
-    c_midi.execute('''CREATE TABLE IF NOT EXISTS midi_key_mappings
+    c_stream.execute('''CREATE TABLE IF NOT EXISTS midi_key_mappings
         (note integer PRIMARY KEY, name text, type text, action text, sources json, selection text)''')
-    db_midi.commit()
-    db_midi.close()
+    db_stream.commit()
+    db_stream.close()
 
 
-
-    db = sqlite3.connect("riots-memory.db", check_same_thread=False)
+    db = sqlite3.connect("db/riots-memory.db", check_same_thread=False)
 
     c = db.cursor()
 
@@ -207,7 +233,7 @@ def start_api(**kwargs):
 
     conversation = c.execute("SELECT * FROM messages ORDER BY timestamp DESC LIMIT 300").fetchall()
 
-    checkpointPath = "MeloTTS/melo/logs/voices/"
+    checkpointPath = "VoiceTraining/logs/voices/"
     highest = 0
     for file in os.listdir(checkpointPath):
         if file.startswith("G_") and file.endswith(".pth"):
@@ -215,7 +241,7 @@ def start_api(**kwargs):
             if number > highest:
                 highest = number
     
-    tts_model = TTS(language='EN', device='auto', config_path="MeloTTS/melo/data/voices/config.json", ckpt_path=f"MeloTTS/melo/logs/voices/G_{highest}.pth")
+    tts_model = TTS(language='EN', device='auto', config_path="VoiceTraining/data/voices/config.json", ckpt_path=f"VoiceTraining/logs/voices/G_{highest}.pth")
     print(f"Loaded TTS model G_{highest}.pth", file=sys.stderr)
     print(f"TTS Voices: {tts_model.hps.data.spk2id}", file=sys.stderr)
     
@@ -280,7 +306,7 @@ def check_person(username: str):
                 "is_ai": False,
                 "init_messages": []
             })
-            c.execute("INSERT INTO people VALUES (?, ?, ?, ?, ?, ?, ?)", (n.username, json.dumps(n.nicknames), n.tts_id, n.type, json.dumps(n.knowledge), n.is_ai, json.dumps(n.init_messages)))
+            c.execute("INSERT INTO people VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT(username) DO UPDATE nicknames=excluded.nicknames, tts_id=excluded.tts_id, type=excluded.type, knowledge=excluded.knowledge, is_ai=excluded.is_ai, init_messages=excluded.init_messages", (n.username, json.dumps(n.nicknames), n.tts_id, n.type, json.dumps(n.knowledge), n.is_ai, json.dumps(n.init_messages)))
             return n
 
 def speak(message: str, character: str, source: str):
@@ -304,17 +330,32 @@ def speak(message: str, character: str, source: str):
 
             characters[index].textBuffer.clear()
 
-            audio = tts_model.tts_to_file(replace_all(message), characters[index].tts_id, speed=speed)
-            
-            conversation.append((source, message))
-            c = db.cursor()
-            c.execute("INSERT INTO messages VALUES (?, ?, ?)", (source, message, int(time.time())))
+            messages_commands = messages.split("::")
 
-            with sd.OutputStream(channels=1, samplerate=48000 + pitch) as output_stream:
-                characters[index].doneTalking = time.time() + len(audio) / (44100)
-                streams.append(output_stream)
-                output_stream.start()
-                output_stream.write(audio)
+            i = 0
+            while i < len(messages_commands):
+                print(f"Processing: {messages_commands[i]}", file=sys.stderr)
+                if i % 2 == 0:
+                    audio = tts_model.tts_to_file(replace_all(messages_commands[i]), characters[index].tts_id, speed=speed)
+                    
+                    conversation.append((source, messages_commands[i]))
+                    c = db.cursor()
+                    c.execute("INSERT INTO messages VALUES (?, ?, ?)", (source, messages_commands[i], int(time.time())))
+
+                    with sd.OutputStream(channels=1, samplerate=44100 + pitch) as output_stream:
+                        characters[index].doneTalking = time.time() + len(audio) / (44100)
+                        streams.append(output_stream)
+                        output_stream.start()
+                        output_stream.write(audio)
+                    i += 1
+                else:
+                    command = messages_commands[i].split(" ")
+                    i += 1
+                    if command[0] == "pause":
+                        time.sleep(float(command[1]))
+                    elif command[0] == "stop":
+                        break
+                    
 
             if last_save + 60 < time.time():
                 db.commit()
@@ -369,12 +410,19 @@ def change_speed():
     speed = request.json.get('speed')
     return {'success': True, 'speed': speed}
 
-@flask_app.route('/voice_volume', methods=['POST'])
+@flask_app.route('/voiceVolume', methods=['POST'])
 def change_voice_volume():
     global voice_volume
     print("Changing voice_volume", request.json, file=sys.stderr)
     voice_volume = request.json.get('voice_volume')
     return {'success': True, 'voice_volume': voice_volume}
+
+@flask_app.route('/musicVolume', methods=['POST'])
+def change_music_volume():
+    global music_volume
+    print("Changing music_volume", request.json, file=sys.stderr)
+    music_volume = request.json.get('music_volume')
+    return {'success': True, 'music_volume': music_volume}
 
 @flask_app.route('/updateTick', methods=['POST'])
 def update_tick():
@@ -455,7 +503,7 @@ def get_midi():
 
 @flask_app.route('/midiMapping', methods=['GET'])
 def get_midi_mapping():
-    midi_db = sqlite3.connect("midi.db", check_same_thread=False)
+    midi_db = sqlite3.connect("db/stream.db", check_same_thread=False)
     c = midi_db.cursor()
     ks = c.execute('''SELECT * FROM midi_key_mappings''').fetchall()
     cs = c.execute('''SELECT * FROM midi_control_mappings''').fetchall()
@@ -481,8 +529,9 @@ def get_midi_mapping():
 @flask_app.route('/midiKey', methods=['POST'])
 def post_midi_key():
     print(f"Received new MIDI Key: {request.json}", file=sys.stderr)
-    midi_db = sqlite3.connect("midi.db", check_same_thread=False)
+    midi_db = sqlite3.connect("db/stream.db", check_same_thread=False)
     c = midi_db.cursor()
+    print("oooo", json.dumps(request.json['sources']), file=sys.stderr)
     c.execute('''INSERT INTO midi_key_mappings VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(note) DO UPDATE SET name=excluded.name, type=excluded.type, action=excluded.action, sources=excluded.sources, selection=excluded.selection''', (request.json['note'], request.json['name'], request.json['type'], request.json['action'], json.dumps(request.json['sources']), request.json['selection']))
     midi_db.commit()
     midi_db.close()
@@ -491,7 +540,7 @@ def post_midi_key():
 @flask_app.route('/midiControl', methods=['POST'])
 def post_midi_control():
     print(f"Received new MIDI Control: {request.json}", file=sys.stderr)
-    midi_db = sqlite3.connect("midi.db", check_same_thread=False)
+    midi_db = sqlite3.connect("db/stream.db", check_same_thread=False)
     c = midi_db.cursor()
     c.execute('''INSERT INTO midi_control_mappings VALUES (?, ?) ON CONFLICT(control) DO UPDATE SET name=excluded.name''', (request.json['control'], request.json['name']))
     midi_db.commit()
@@ -500,7 +549,7 @@ def post_midi_control():
 
 @flask_app.route('/midiKeyDelete', methods=['POST'])
 def delete_midi_key():
-    midi_db = sqlite3.connect("midi.db", check_same_thread=False)
+    midi_db = sqlite3.connect("db/stream.db", check_same_thread=False)
     c = midi_db.cursor()
     c.execute('''DELETE FROM midi_key_mappings WHERE note = ?''', (request.json['note'],))
     midi_db.commit()
@@ -509,7 +558,7 @@ def delete_midi_key():
 
 @flask_app.route('/midiControlDelete', methods=['POST'])
 def delete_midi_control():
-    midi_db = sqlite3.connect("midi.db", check_same_thread=False)
+    midi_db = sqlite3.connect("db/stream.db", check_same_thread=False)
     c = midi_db.cursor()
     c.execute('''DELETE FROM midi_control_mappings WHERE control = ?''', (request.json['control'],))
     midi_db.commit()
@@ -521,10 +570,10 @@ def add_youtube_song():
     print(f"adding YouTube song: {request.json}", file=sys.stderr)
     url = request.json.get('url')
     dmca_risk = request.json.get('dmca_risk', 0)
-    db = sqlite3.connect("music.db")
+    db = sqlite3.connect("db/stream.db")
     c = db.cursor()
     c.execute('''CREATE TABLE IF NOT EXISTS songs
-             (id text, title text, author text, link text, duration text, path text, thumbnail_url text, thumbnail_path text, dmca_risk integer)''')
+             (id text PRIMARY KEY, title text, author text, link text, duration text, path text, thumbnail_url text, thumbnail_path text, dmca_risk integer, approved integer)''')
     try:
         ydl_opts = {
             'format': 'bestaudio/best',
@@ -534,7 +583,6 @@ def add_youtube_song():
         
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info_dict = ydl.extract_info(url, download=True)
-            print(info_dict)
             print(f"Title: {info_dict.get('title', 'Unknown Title')}")
             print(f"Download completed! File saved as {info_dict.get('display_id', 'Unknown')}.{info_dict.get('ext', 'mp3')}")
             thumbnail_url = info_dict.get('thumbnail', 'Unknown Thumbnail URL')
@@ -544,7 +592,43 @@ def add_youtube_song():
                     file.write(thumbnail_file.content)
 
             print(f"Thumbnail downloaded! File saved as {thumbnail_path}")
-            c.execute("INSERT INTO songs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", (info_dict.get('display_id', 'Unknown Title'), info_dict.get('title', 'Unknown Title'), info_dict.get('uploader', 'Unknown Author'), url, info_dict.get('duration', 'Unknown Duration'), f"music/{info_dict.get('display_id', 'Unknown')}.{info_dict.get('ext', 'mp3')}", info_dict.get('thumbnail', 'Unknown Thumbnail URL'), f"music/{info_dict.get('display_id', 'Unknown Title')}.webp", dmca_risk))
+            c.execute("INSERT INTO songs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET title=excluded.title, author=excluded.author, link=excluded.link, duration=excluded.duration, path=excluded.path, thumbnail_url=excluded.thumbnail_url, thumbnail_path=excluded.thumbnail_path, dmca_risk=excluded.dmca_risk, approved=excluded.approved", (info_dict.get('display_id', 'Unknown Title'), info_dict.get('title', 'Unknown Title'), info_dict.get('uploader', 'Unknown Author'), url, info_dict.get('duration', 'Unknown Duration'), os.path.abspath(f"music/{info_dict.get('display_id', 'Unknown')}.{info_dict.get('ext', 'mp3')}"), info_dict.get('thumbnail', 'Unknown Thumbnail URL'), os.path.abspath(f"music/{info_dict.get('display_id', 'Unknown Title')}.webp"), dmca_risk, 0))
+            db.commit()
+            db.close()
+            return {'success': True}
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+@flask_app.route('/addYoutubeSound', methods=['POST'])
+def add_youtube_sound():
+    print(f"adding YouTube sound: {request.json}", file=sys.stderr)
+    url = request.json.get('url')
+    name = request.json.get('name')
+    start_time = int(request.json.get('start_time', 0))
+    length = int(request.json.get('length', 6))
+    length = min(length, 10)
+    db = sqlite3.connect("db/stream.db")
+    c = db.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS sounds
+             (name text PRIMARY KEY, source_url text, duration text, path text, approved integer)''')
+    try:
+        ydl_opts = {
+            'format': 'bestaudio/best',
+            'merge_output_format': 'mp3',
+            'outtmpl': f'sounds/youtube/{name}.%(ext)s',
+            
+            "external_downloader": "ffmpeg",
+            "external_downloader_args": {"ffmpeg_i": ["-ss", str(start_time), "-to", str(start_time + length)]},
+        }
+
+        print(f"Downloading {url} to sounds/youtube/{name}.mp3")
+        
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info_dict = ydl.extract_info(url, download=True)
+            print(f"Adding New Sound: {name}")
+            print(f"Download completed! File saved as {name}.{info_dict.get('ext', 'mp3')}")
+
+            c.execute("INSERT INTO sounds VALUES (?, ?, ?, ?, ?) ON CONFLICT(name) DO UPDATE SET source_url=excluded.source_url, duration=excluded.duration, path=excluded.path, approved=excluded.approved", (name, url, info_dict.get('duration', 'Unknown Duration'), os.path.abspath(f"sounds/youtube/{name}.webm"), 0))
             db.commit()
             db.close()
             return {'success': True}
@@ -554,7 +638,7 @@ def add_youtube_song():
 
 @flask_app.route('/songs', methods=['GET'])
 def get_songs():
-    db = sqlite3.connect("music.db")
+    db = sqlite3.connect("db/stream.db")
     c = db.cursor()
     ss = c.execute("SELECT * FROM songs").fetchall()
     songs = []
@@ -563,9 +647,20 @@ def get_songs():
     db.close()
     return songs
 
+@flask_app.route('/sounds', methods=['GET'])
+def get_sounds():
+    db = sqlite3.connect("db/stream.db")
+    c = db.cursor()
+    ss = c.execute("SELECT * FROM sounds").fetchall()
+    sounds = []
+    for sound in ss:
+        sounds.append(Sound(sound).to_dict())
+    db.close()
+    return sounds
+
 @flask_app.route('/randomPlaylist', methods=['GET'])
 def get_random_playlist():
-    db = sqlite3.connect("music.db")
+    db = sqlite3.connect("db/stream.db")
     c = db.cursor()
     size = request.args.get('size')
     if not size:
@@ -578,6 +673,7 @@ def get_random_playlist():
 
 @flask_app.route('/playSong', methods=['POST'])
 def play_song():
+    global songQueue
     global music_stream
     global paused
     if paused:
@@ -589,10 +685,79 @@ def play_song():
         music_stream.stop()
         music_stream = None
     song = Song(request.json.get('song'))
+    songQueue.insert(0, song)
     print(f"Playing: {song}", file=sys.stderr)
+    while len(songQueue) > 0:
+        song = songQueue.pop()
+        print(f"Playing: {song}", file=sys.stderr)
+        music_stream = sd.OutputStream(channels=1, blocksize=6000, samplerate=48000, dtype='float32')
+        music_stream.start()
+        out = ffmpeg.input(filename=song.path).output('-', format='f32le', acodec='pcm_f32le', ac=1, ar='48000').overwrite_output().run(capture_stdout=True, capture_stderr=True)
+        audio_data = np.frombuffer(out[0], dtype=np.float32)
+
+        blocks = len(audio_data) // music_stream.blocksize
+        block = 0
+        print(f"Blocks: {blocks}", file=sys.stderr)
+        try:
+            while music_stream.active:
+                while paused:
+                    time.sleep(0.2)
+                if len(audio_data) == 0:
+                    music_stream.stop()
+                    music_stream = None
+                music_stream.write(audio_data[block * music_stream.blocksize:(block + 1) * music_stream.blocksize] * music_volume)
+
+                block += 1
+                if block >= blocks:
+                    music_stream.stop()
+                    music_stream = None
+        except Exception as e:
+            print(f"Song Stopped", e)
+            return {'success': True}
+        
+        print("Song finished", file=sys.stderr)
+    return {'success': True}
+
+@flask_app.route('/queueSong', methods=['POST'])
+def queue_song():
+    global songQueue
+    song = Song(request.json.get('song'))
+    songQueue.append(song)
+    return {'success': True}
+
+@flask_app.route('/stopSong', methods=['POST'])
+def stop_song():
+    global music_stream
+    global paused
+    paused = False
+    if music_stream:
+        music_stream.stop()
+        music_stream = None
+    return {'success': True}
+
+@flask_app.route('/pauseSong', methods=['POST'])
+def pause_song():
+    global paused
+    paused = not paused
+    return {'success': True}
+
+@flask_app.route('/playSound', methods=['POST'])
+def play_sound():
+    global music_stream
+    global paused
+    if paused:
+        paused = False
+        if music_stream:
+            music_stream.start()
+            return {'success': True}
+    if music_stream:
+        music_stream.stop()
+        music_stream = None
+    sound = Sound(request.json.get('sound'))
+    print(f"Playing: {sound}", file=sys.stderr)
     music_stream = sd.OutputStream(channels=1, blocksize=6000, samplerate=48000, dtype='float32')
     music_stream.start()
-    out = ffmpeg.input(filename=song.path).output('-', format='f32le', acodec='pcm_f32le', ac=1, ar='48000').overwrite_output().run(capture_stdout=True, capture_stderr=True)
+    out = ffmpeg.input(filename=sound.path).output('-', format='f32le', acodec='pcm_f32le', ac=1, ar='48000').overwrite_output().run(capture_stdout=True, capture_stderr=False)
     audio_data = np.frombuffer(out[0], dtype=np.float32)
 
     blocks = len(audio_data) // music_stream.blocksize
@@ -613,26 +778,10 @@ def play_song():
                 music_stream.stop()
                 music_stream = None
     except Exception as e:
-        print(f"Song Stopped")
+        print(f"Sound Stopped")
         return {'success': True}
     
-    print("Song finished", file=sys.stderr)
-    return {'success': True}
-
-@flask_app.route('/stopSong', methods=['POST'])
-def stop_song():
-    global music_stream
-    global paused
-    paused = False
-    if music_stream:
-        music_stream.stop()
-        music_stream = None
-    return {'success': True}
-
-@flask_app.route('/pauseSong', methods=['POST'])
-def pause_song():
-    global paused
-    paused = not paused
+    print("Sound finished", file=sys.stderr)
     return {'success': True}
 
 if __name__ == "__main__":

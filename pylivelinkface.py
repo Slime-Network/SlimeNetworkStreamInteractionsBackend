@@ -5,7 +5,6 @@ from enum import Enum
 import struct
 from typing import Tuple
 import datetime
-import uuid
 from timecode import Timecode
 
 class FaceBlendShape(Enum):

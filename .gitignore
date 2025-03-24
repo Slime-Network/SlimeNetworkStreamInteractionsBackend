@@ -10,6 +10,7 @@ sounds/
 processed/
 music/
 VoiceTraining/
+db/
 
 # Distribution / packaging
 .Python

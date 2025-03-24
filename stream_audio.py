@@ -1,4 +1,3 @@
-import asyncio
 import multiprocessing
 import json
 import time
@@ -92,7 +91,7 @@ def main():
 
 
             threading.Thread(target=microphone_thread).start()
-            threading.Thread(target=desktop_audio_thread).start()
+            # threading.Thread(target=desktop_audio_thread).start()
 
             while True:
                 time.sleep(1)

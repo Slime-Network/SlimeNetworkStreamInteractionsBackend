@@ -1,4 +1,3 @@
-import random
 import sqlite3
 from threading import Timer
 import time
@@ -7,7 +6,7 @@ import json
 
 import requests
 
-db = sqlite3.connect("midi.db", check_same_thread=False)
+db = sqlite3.connect("db/stream.db", check_same_thread=False)
 
 class KeyMapping():
     def __init__(self, **kwargs):
@@ -151,7 +150,18 @@ class MidiSoundBoard():
 
     def change_volume(self, volume):
         try:
-            url = "http://127.0.0.1:5275/volume"
+            url = "http://127.0.0.1:5275/voiceVolume"
+            payload = {"volume": volume}
+            headers = {
+                "Content-Type": "application/json"
+            }
+            response = requests.post(url, json=payload, headers=headers)
+        except Exception as e:
+            print(f"Error: {e}")
+
+    def change_music_volume(self, volume):
+        try:
+            url = "http://127.0.0.1:5275/musicVolume"
             payload = {"volume": volume}
             headers = {
                 "Content-Type": "application/json"
@@ -218,21 +228,25 @@ class MidiSoundBoard():
 
                         
                     elif message.type == "control_change":
-                        control_map = self.controls.get(str(message.control))
+                        control_map = self.controls[message.control]
+                        print(f"Control Map: {control_map}")
+
 
                         if control_map is None:
                             continue
-
-                        if control_map.name == "speed":
+                        if control_map.name == "Voice Speed":
                             self.change_speed(message.value / 127 * 2)
                             print("Speed")
-                        elif control_map.name == "pitch":
+                        elif control_map.name == "Voice Pitch":
                             self.change_pitch(message.value / 127)
                             print("Pitch")
-                        elif control_map.name == "volume":
+                        elif control_map.name == "Voice Volume":
                             self.change_volume(message.value / 127)
                             print("Volume")
-                        elif control_map.name == "frequency":
+                        elif control_map.name == "Music Volume":
+                            self.change_music_volume(message.value / 127)
+                            print("Volume")
+                        elif control_map.name == "Tick Frequency":
                             print("Frequency: {}".format(message.value))
                             self.tick_delay = max(message.value/2, self.minimum_tick_delay)
                             print(f"New delay: {self.tick_delay}")

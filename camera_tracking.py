@@ -27,7 +27,7 @@ C2_Y_ANGLE = -60
 
 CAMERA_OFFSET = 245 # distance between cameras
 
-ORIGIN_OFFSET = [0, 5, 45]
+ORIGIN_OFFSET = [-20, 10, 45]
 HEAD_ROTATE_OFFSET = [0, 0, -0.2]
 ORIGIN_SCALE = [1, -1, 1]
 
