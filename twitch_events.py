@@ -52,7 +52,8 @@ from twitchAPI.object.eventsub import (
 from twitchAPI.eventsub.websocket import EventSubWebsocket
 from twitchAPI.type import AuthScope
 import asyncio
-import json
+from thefuzz import fuzz
+from utils import get_characters_from_db
 
 
 Currency_0 = [
@@ -90,12 +91,7 @@ Currency_4 = [
     "UYW",
 ]
 
-def read_characters_from_json(file_path):
-    with open(file_path, 'r') as file:
-        characters = json.load(file)
-    return characters
-
-characters = read_characters_from_json('characters.json')
+characters = get_characters_from_db()
 
 def twitch_events(**kwargs):
 
@@ -185,22 +181,33 @@ def twitch_events(**kwargs):
         AuthScope.WHISPERS_READ,
     ]
 
-
     async def on_channel_ad_break_begin(data: ChannelAdBreakBeginEvent):
         forward_event_text_to_api({"source": "Twitch", "message": f'{"Automatic" if data.event.is_automatic else "Manual"} ad break begin event: Duration {data.event.duration_seconds}'})
 
     async def on_channel_chat_message(data: ChannelChatMessageEvent):
         c = False
-        for character in characters:
-            if data.event.message.text.lower().startswith(f"{characters[character]['username'].lower()}:"):
+        chatter = data.event.chatter_user_name.lower()
+        if ":" in data.event.message.text:
+            command = data.event.message.text.split(":")[0].lower()
+            print(f"checking message: {data.event.message.text}")
+            for character in characters:
+                username = characters[character].username.lower()
+                print(f"checking character: |{command}| |{username}|")
+                if username == command:
+                    print(f"found character: {username}")
+                    c = True
+                    forward_event_to_speak({"character": characters[character].username.lower(), "message": data.event.message.text[len(characters[character].username)+1:], "source": "user chat"})
+                    break
+        else:
+            if chatter in characters:
+                forward_event_to_speak({"character": chatter, "message": data.event.message.text, "source": "real chat"})
                 c = True
-                forward_event_to_speak({"character": characters[character]['username'], "message": data.event.message.text[len(characters[character]['username'])+1:], "source": data.event.chatter_user_name})
-        
         if not c:
+            print(f"not found: {data.event.chatter_user_name}")
             forward_event_text_to_api({"source": data.event.chatter_user_name, "message": f'Chat message from {data.event.chatter_user_name}: {data.event.message.text}'})
 
     async def on_channel_chat_message_delete(data: ChannelChatMessageDeleteEvent):
-        forward_event_text_to_api({"source": data.event.target_user_name, "message": f'Chat message from {data.event.target_user_name} was deleted'})
+        forward_event_text_to_api({"source": "Twitch", "message": f'Chat message from {data.event.target_user_name} was deleted'})
 
     async def on_channel_chat_notification(data: ChannelChatNotificationEvent):
         forward_event_text_to_api({"source": data.event.chatter_user_name, "message": f'Channel chat notification event: {data.event.notice_type}'})
@@ -209,7 +216,7 @@ def twitch_events(**kwargs):
         forward_event_text_to_api({"source": "Twitch", "message": f'Channel chat settings updated event'})
 
     async def on_channel_chat_user_message_hold(data: ChannelChatUserMessageHoldEvent):
-        forward_event_text_to_api({"source": "AutoMod", "message": f'Channel chat user message hold event: {data.event.message_id}'})
+        forward_event_text_to_api({"source": "Twitch", "message": f'Channel chat user message hold event: {data.event.message_id}'})
 
     async def on_channel_chat_user_message_update(data: ChannelChatUserMessageUpdateEvent):
         forward_event_text_to_api({"source": data.event.user_name, "message": f'Channel chat user message update event: {data.event.message}'})
@@ -222,7 +229,7 @@ def twitch_events(**kwargs):
 
     async def on_channel_moderate(data: ChannelModerateEvent):
         if (data.event.action == "ban"):
-            forward_event_text_to_api({"source": data.event.moderator_user_name, "message": f'Viewer {data.event.ban.user_name} was banned for {data.event.ban.reason}'})
+            forward_event_text_to_api({"source": "Twitch", "message": f'Viewer {data.event.ban.user_name} was banned for {data.event.ban.reason} by {data.event.moderator_user_name}'})
         elif (data.event.action == "timeout"):
             time_difference = data.event.timeout.expires_at - time.time()
             days = time_difference.days
@@ -237,74 +244,74 @@ def twitch_events(**kwargs):
                 time_string += f'{minutes} minutes '
             if seconds > 0:
                 time_string += f'{seconds} seconds '
-            forward_event_text_to_api({"source": data.event.moderator_user_name, "message": f'Viewer {data.event.timeout.user_name} was timed out for {time_string}'})
+            forward_event_text_to_api({"source": "Twitch", "message": f'Viewer {data.event.timeout.user_name} was timed out for {time_string} by {data.event.moderator_user_name}'})
         elif (data.event.action == "unban"):
-            forward_event_text_to_api({"source": data.event.moderator_user_name, "message": f'Viewer {data.event.unban.user_name} was unbanned'})
+            forward_event_text_to_api({"source": "Twitch", "message": f'Viewer {data.event.unban.user_name} was unbanned by {data.event.moderator_user_name}'})
         elif (data.event.action == "untimeout"):
-            forward_event_text_to_api({"source": data.event.moderator_user_name, "message": f'Viewer {data.event.untimeout} was untimed out'})
+            forward_event_text_to_api({"source": "Twitch", "message": f'Viewer {data.event.untimeout} was untimed out by {data.event.moderator_user_name}'})
         elif (data.event.action == "clear"):
-            forward_event_text_to_api({"source": data.event.moderator_user_name, "message": 'Chat was cleared'})
+            forward_event_text_to_api({"source": "Twitch", "message": f'Chat was cleared by {data.event.moderator_user_name}'})
         elif (data.event.action == "emoteonly"):
-            forward_event_text_to_api({"source": data.event.moderator_user_name, "message": 'Emote only mode enabled'})
+            forward_event_text_to_api({"source": "Twitch", "message": f'Emote only mode enabled by {data.event.moderator_user_name}'})
         elif (data.event.action == "emoteonlyoff"):
-            forward_event_text_to_api({"source": data.event.moderator_user_name, "message": 'Emote only mode disabled'})
+            forward_event_text_to_api({"source": "Twitch", "message": f'Emote only mode disabled by {data.event.moderator_user_name}'})
         elif (data.event.action == "followers"):
-            forward_event_text_to_api({"source": data.event.moderator_user_name, "message": 'Followers only mode enabled'})
+            forward_event_text_to_api({"source": "Twitch", "message": f'Followers only mode enabled by {data.event.moderator_user_name}'})
         elif (data.event.action == "followersoff"):
-            forward_event_text_to_api({"source": data.event.moderator_user_name, "message": 'Followers only mode disabled'})
+            forward_event_text_to_api({"source": "Twitch", "message": f'Followers only mode disabled by {data.event.moderator_user_name}'})
         elif (data.event.action == "uniquechat"):
-            forward_event_text_to_api({"source": data.event.moderator_user_name, "message": 'Unique chat enabled'})
+            forward_event_text_to_api({"source": "Twitch", "message": f'Unique chat enabled by {data.event.moderator_user_name}'})
         elif (data.event.action == "uniquechatoff"):
-            forward_event_text_to_api({"source": data.event.moderator_user_name, "message": 'Unique chat disabled'})
+            forward_event_text_to_api({"source": "Twitch", "message": f'Unique chat disabled by {data.event.moderator_user_name}'})
         elif (data.event.action == "slow"):
-            forward_event_text_to_api({"source": data.event.moderator_user_name, "message": f'Slow mode enabled: {data.event.slow.wait_time_seconds} seconds'})
+            forward_event_text_to_api({"source": "Twitch", "message": f'Slow mode enabled: {data.event.slow.wait_time_seconds} seconds by {data.event.moderator_user_name}'})
         elif (data.event.action == "slowoff"):
-            forward_event_text_to_api({"source": data.event.moderator_user_name, "message": 'Slow mode disabled'})
+            forward_event_text_to_api({"source": "Twitch", "message": f'Slow mode disabled by {data.event.moderator_user_name}'})
         elif (data.event.action == "subscribers"):
-            forward_event_text_to_api({"source": data.event.moderator_user_name, "message": 'Subscribers only mode enabled'})
+            forward_event_text_to_api({"source": "Twitch", "message": f'Subscribers only mode enabled by {data.event.moderator_user_name}'})
         elif (data.event.action == "subscribersoff"):
-            forward_event_text_to_api({"source": data.event.moderator_user_name, "message": 'Subscribers only mode disabled'})
+            forward_event_text_to_api({"source": "Twitch", "message": f'Subscribers only mode disabled by {data.event.moderator_user_name}'})
         elif (data.event.action == "unraid"):
-            forward_event_text_to_api({"source": data.event.moderator_user_name, "message": 'Raid Cancelled'})
+            forward_event_text_to_api({"source": "Twitch", "message": f'Raid Cancelled by {data.event.moderator_user_name}'})
         elif (data.event.action == "delete"):
-            forward_event_text_to_api({"source": data.event.moderator_user_name, "message": f'Message from {data.event.delete.user_name} was deleted'})
+            forward_event_text_to_api({"source": "Twitch", "message": f'Message from {data.event.delete.user_name} was deleted by {data.event.moderator_user_name}'})
         elif (data.event.action == "vip"):
-            forward_event_text_to_api({"source": data.event.moderator_user_name, "message": f'Viewer {data.event.vip.user_name} was added as VIP'})
+            forward_event_text_to_api({"source": "Twitch", "message": f'Viewer {data.event.vip.user_name} was added as VIP by {data.event.moderator_user_name}'})
         elif (data.event.action == "unvip"):
-            forward_event_text_to_api({"source": data.event.moderator_user_name, "message": f'Viewer {data.event.unvip.user_name} was removed as VIP'})
+            forward_event_text_to_api({"source": "Twitch", "message": f'Viewer {data.event.unvip.user_name} was removed as VIP by {data.event.moderator_user_name}'})
         elif (data.event.action == "raid"):
-            forward_event_text_to_api({"source": data.event.moderator_user_name, "message": f'Starting Raid on {data.event.raid.user_name} with {data.event.raid.viewer_count} viewers'})
+            forward_event_text_to_api({"source": "Twitch", "message": f'Starting Raid on {data.event.raid.user_name} with {data.event.raid.viewer_count} viewers started by {data.event.moderator_user_name}'})
         elif (data.event.action == "add_blocked_term"):
-            forward_event_text_to_api({"source": data.event.moderator_user_name, "message": f'Blocked term(s) added: {data.event.automod_terms.terms}'})
+            forward_event_text_to_api({"source": "Twitch", "message": f'Blocked term(s) added: {data.event.automod_terms.terms} by {data.event.moderator_user_name}'})
         elif (data.event.action == "add_permitted_term"):
-            forward_event_text_to_api({"source": data.event.moderator_user_name, "message": f'Permitted term(s) added: {data.event.automod_terms.terms}'})
+            forward_event_text_to_api({"source": "Twitch", "message": f'Permitted term(s) added: {data.event.automod_terms.terms} by {data.event.moderator_user_name}'})
         elif (data.event.action == "remove_blocked_term"):
-            forward_event_text_to_api({"source": data.event.moderator_user_name, "message": f'Blocked term(s) removed: {data.event.automod_terms.terms}'})
+            forward_event_text_to_api({"source": "Twitch", "message": f'Blocked term(s) removed: {data.event.automod_terms.terms} by {data.event.moderator_user_name}'})
         elif (data.event.action == "remove_permitted_term"):
-            forward_event_text_to_api({"source": data.event.moderator_user_name, "message": f'Permitted term(s) removed: {data.event.automod_terms.terms}'})
+            forward_event_text_to_api({"source": "Twitch", "message": f'Permitted term(s) removed: {data.event.automod_terms.terms} by {data.event.moderator_user_name}'})
         elif (data.event.action == "mod"):
-            forward_event_text_to_api({"source": data.event.moderator_user_name, "message": f'Viewer {data.event.mod.user_name} added as moderator'})
+            forward_event_text_to_api({"source": "Twitch", "message": f'Viewer {data.event.mod.user_name} added as moderator by {data.event.moderator_user_name}'})
         elif (data.event.action == "unmod"):
-            forward_event_text_to_api({"source": data.event.moderator_user_name, "message": f'Viewer {data.event.unmod.user_name} removed as moderator'})
+            forward_event_text_to_api({"source": "Twitch", "message": f'Viewer {data.event.unmod.user_name} removed as moderator by {data.event.moderator_user_name}'})
         elif (data.event.action == "approve_unban_request"):
-            forward_event_text_to_api({"source": data.event.moderator_user_name, "message": f'Unban request approved for {data.event.unban_request.user_name}'})
+            forward_event_text_to_api({"source": "Twitch", "message": f'Unban request approved for {data.event.unban_request.user_name} by {data.event.moderator_user_name}'})
         elif (data.event.action == "deny_unban_request"):
-            forward_event_text_to_api({"source": data.event.moderator_user_name, "message": f'Unban request denied for {data.event.unban_request.user_name}'})
+            forward_event_text_to_api({"source": "Twitch", "message": f'Unban request denied for {data.event.unban_request.user_name} by {data.event.moderator_user_name}'})
         elif (data.event.action == "warn"):
-            forward_event_text_to_api({"source": data.event.moderator_user_name, "message": f'Warning sent to {data.event.warn.user_name} for {data.event.warn.chat_rules_cited} | Reason: {data.event.warn.reason}'})
+            forward_event_text_to_api({"source": "Twitch", "message": f'Warning sent to {data.event.warn.user_name} by {data.event.moderator_user_name} for {data.event.warn.chat_rules_cited} | Reason: {data.event.warn.reason}'})
 
 
     async def on_channel_points_automatic_reward_redemption_add(data: ChannelPointsAutomaticRewardRedemptionAddEvent):
-        forward_event_text_to_api({"source": data.event.user_name, "message": f'Viewer {data.event.user_name} redeemed: {data.event.reward.to_dict()}'})
+        forward_event_text_to_api({"source": "Twitch", "message": f'Viewer {data.event.user_name} redeemed: {data.event.reward.to_dict()}'})
 
     async def on_channel_points_custom_reward_add(data: ChannelPointsCustomRewardAddEvent):
         forward_event_text_to_api({"source": "Twitch", "message": f'New Channel Point Redeem added: {data.event.title} for {data.event.cost} Points'})
 
     async def on_channel_points_custom_reward_redemption_add(data: ChannelPointsCustomRewardRedemptionAddEvent):
-        forward_event_text_to_api({"source": data.event.user_name, "message": f'Viewer {data.event.user_name} redeemed: {data.event.reward.to_dict()}'})
+        forward_event_text_to_api({"source": "Twitch", "message": f'Viewer {data.event.user_name} redeemed: {data.event.reward.to_dict()}'})
 
     async def on_channel_points_custom_reward_redemption_update(data: ChannelPointsCustomRewardRedemptionUpdateEvent):
-        forward_event_text_to_api({"source": data.event.user_name, "message": f'Channel Point Redeem updated: {data.event.user_name} for {data.event.cost} Points'})
+        forward_event_text_to_api({"source": "Twitch", "message": f'Channel Point Redeem updated: {data.event.user_name} for {data.event.cost} Points'})
 
     async def on_channel_points_custom_reward_remove(data: ChannelPointsCustomRewardRemoveEvent):
         forward_event_text_to_api({"source": "Twitch", "message": f'Channel points reward {data.event.title} removed'})
@@ -445,14 +452,13 @@ def twitch_events(**kwargs):
         forward_event_text_to_api({"source": "Twitch", "message": f'Shoutout received from {data.event.from_broadcaster_user_name}'})
 
     async def on_channel_warning_acknowledge(data: ChannelWarningAcknowledgeEvent):
-        forward_event_text_to_api({"source": "AutoMod", "message": f'Warning acknowledged by {data.event.user_name}'})
+        forward_event_text_to_api({"source": "Twitch", "message": f'Warning acknowledged by {data.event.user_name}'})
 
     async def on_channel_suspicious_user_update(data: ChannelSuspiciousUserUpdateEvent):
-        forward_event_text_to_api({"source": data.event.moderator_user_name, "message": f'Viewer {data.event.user_name} has been marked as {"suspicious" if data.event.low_trust_status == "none" else "not suspicious"}'})
+        forward_event_text_to_api({"source": "Twitch", "message": f'Viewer {data.event.user_name} has been marked as {"suspicious" if data.event.low_trust_status == "none" else "not suspicious"}'})
 
     async def on_channel_suspicious_user_message(data: ChannelSuspiciousUserMessageEvent):
-        forward_event_text_to_api({"source": "AutoMod", "message": f'Chat message from suspicious viewer {data.event.user_name}: {data.event.message.text}'})
-
+        forward_event_text_to_api({"source": "Twitch", "message": f'Chat message from suspicious viewer {data.event.user_name}: {data.event.message.text}'})
 
     async def run():
         # create the api instance and get user auth either from storage or website

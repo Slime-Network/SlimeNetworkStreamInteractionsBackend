@@ -13,36 +13,32 @@ import math
 
 VIDEO_DEVICES = 5
 
-FOV_X = 40
-FOV_Y = 70
+FOV_X = 70
+FOV_Y = 40
 
-RES_X = 576
-RES_Y = 960
+RES_X = 960
+RES_Y = 576
 
-C1_X_ANGLE = 45
-C1_Y_ANGLE = -60
+C1_X_ANGLE = 10
+C1_Y_ANGLE = 0
 
-C2_X_ANGLE = -45
-C2_Y_ANGLE = -60
+C2_X_ANGLE = -10
+C2_Y_ANGLE = 0
 
-CAMERA_OFFSET = 245 # distance between cameras
+CAMERA_OFFSET = 80 # distance between cameras
+CAMERA_HEIGHT = 96
 
-ORIGIN_OFFSET = [-20, 10, 45]
-HEAD_ROTATE_OFFSET = [0, 0, -0.2]
+ORIGIN_OFFSET = [0, 0, 0]
+HEAD_ROTATE_OFFSET = [0, 0, 0]
 ORIGIN_SCALE = [1, -1, 1]
 
 MOVEMENT_TOLERANCE = 10
+MARKER_THRESHOLD = 55
 
 DATA_INTERVAL = 0.1
 
 UDP_IP = "127.0.0.1"
 UDP_PORT = 11111
-
-
-s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) 
-s.connect((UDP_IP, UDP_PORT))
-
-py_face = PyLiveLinkFace()
 
 class Transform:
     def __init__(self, position, rotation):
@@ -202,47 +198,57 @@ class TrackingMarker:
 
         # Get angles
         if self.camera_positions.get('Cam1'):
-            c1_x_angle = (self.camera_positions['Cam1'][0] / RES_X - 0.5) * 2 * FOV_X + C1_X_ANGLE
+            c1_x_angle = 90-((self.camera_positions['Cam1'][0] / RES_X - 0.5) * FOV_X + C1_X_ANGLE)
             # print(f"c1Xa: {c1_x_angle}")
-            c1_y_angle = C1_Y_ANGLE - (self.camera_positions['Cam1'][1] / RES_Y - 0.5) * 2 * FOV_Y
+            c1_y_angle = C1_Y_ANGLE - (self.camera_positions['Cam1'][1] / RES_Y - 0.5) * FOV_Y
             # print(f"c1Ya: {c1_y_angle}")
         if self.camera_positions.get('Cam2'):
-            c2_x_angle = (self.camera_positions['Cam2'][0] / RES_X - 0.5) * 2 * FOV_X + C2_X_ANGLE
+            c2_x_angle = 90+((self.camera_positions['Cam2'][0] / RES_X - 0.5) * FOV_X + C2_X_ANGLE)
             # print(f"c2Xa: {c2_x_angle}")
-            c2_y_angle = C2_Y_ANGLE - (self.camera_positions['Cam2'][1] / RES_Y - 0.5) * 2 * FOV_Y
+            c2_y_angle = C2_Y_ANGLE - (self.camera_positions['Cam2'][1] / RES_Y - 0.5) * FOV_Y
             # print(f"c2Ya: {c2_y_angle}")
-
+    
         pov_x_angle = 180 - abs(c1_x_angle) - abs(c2_x_angle)
+        pov_c2x_angle = 90 - c2_x_angle
 
+        # print(f"{self.name} pov:{pov_x_angle:.2f} c1x:{c1_x_angle:.2f} c2x:{c2_x_angle:.2f} {pov_x_angle + c1_x_angle + c2_x_angle:.2f}")
 
         # Convert angles to radians
-        c1_x_angle = math.radians(90-abs(c1_x_angle))
+        c1_x_angle = math.radians(abs(c1_x_angle))
         c1_y_angle = math.radians(abs(c1_y_angle))
-        c2_x_angle = math.radians(90-abs(c2_x_angle))
+        c2_x_angle = math.radians(abs(c2_x_angle))
         c2_y_angle = math.radians(abs(c2_y_angle))
         pov_x_angle = math.radians(pov_x_angle)
-        
+        pov_c2x_angle = math.radians(abs(pov_c2x_angle))
+
 
         # Law of Tangents
-        # calc H1 (distance from camera 1 to marker)
-        # (CAMERA_OFFSET - H1) / (CAMERA_OFFSET + H1) = tan(0.5 * (pov_x_angle - c2_x_angle)) / tan(0.5 * (pov_x_angle + c2_x_angle))
-        temp = math.tan(0.5 * (pov_x_angle - c2_x_angle)) / math.tan(0.5 * (pov_x_angle + c2_x_angle))
-        # (CAMERA_OFFSET - H1) = (Camera_OFFSET * temp) + (temp * H1)
-        # CAMERA_OFFSET - (Camera_OFFSET * temp) - H1 = temp * H1
-        # CAMERA_OFFSET - (Camera_OFFSET * temp) = temp * H1 + H1
-        # CAMERA_OFFSET - (Camera_OFFSET * temp) = (temp+1) * H1
-        # (CAMERA_OFFSET - (Camera_OFFSET * temp)) / (temp+1) = H1
-        h1 = (CAMERA_OFFSET - (CAMERA_OFFSET * temp)) / (temp+1)
+        # calc H2 (distance from camera 2 to marker)
+        # (CAMERA_OFFSET - H2) / (CAMERA_OFFSET + H2) = tan(0.5 * (pov_x_angle - c1_x_angle)) / tan(0.5 * (pov_x_angle + c1_x_angle))
+        temp = math.tan(0.5 * (pov_x_angle - c1_x_angle)) / math.tan(0.5 * (pov_x_angle + c1_x_angle))
+        # (CAMERA_OFFSET - H2) = (Camera_OFFSET * temp) + (temp * H2)
+        # CAMERA_OFFSET - (Camera_OFFSET * temp) - H2 = temp * H2
+        # CAMERA_OFFSET - (Camera_OFFSET * temp) = temp * H2 + H2
+        # CAMERA_OFFSET - (Camera_OFFSET * temp) = (temp+1) * H2
+        # (CAMERA_OFFSET - (Camera_OFFSET * temp)) / (temp+1) = H2
+        h2 = (CAMERA_OFFSET - (CAMERA_OFFSET * temp)) / (temp+1)
 
-        y = math.sin(c1_x_angle) * h1
-        x = CAMERA_OFFSET - math.cos(c1_x_angle) * h1
-        if not math.tan(c1_y_angle) == 0: # protect against division by zero
-            z = h1 / math.tan(c1_y_angle)
+        # cos(c2_x_angle) = x / h2
+        x = h2 * math.cos(c2_x_angle)
+        # sin(c2_x_angle) = y / h2
+        y = h2 * math.sin(c2_x_angle)
+        # sin(c2_y_angle) = z / h2
+        z = CAMERA_HEIGHT - h2 * math.sin(c2_y_angle)
+
+        # print(f"{self.name} x: {x:.2f} y: {y:.2f} h2: {h2:.2f}")
+        # x = 110
+        # y = 110
+        # z = 110
 
         self.transform.position = [
             x*ORIGIN_SCALE[0]+ORIGIN_OFFSET[0], 
             y*ORIGIN_SCALE[1]+ORIGIN_OFFSET[1],
-            z*ORIGIN_SCALE[2]+ORIGIN_OFFSET[2] - y*0.65 + x*0.7
+            z*ORIGIN_SCALE[2]+ORIGIN_OFFSET[2] #- y*0.65 + x*0.7
         ]
 
         # if (self.name == 'head1'):
@@ -272,47 +278,54 @@ class TrackingMarker:
         return f'Name: {self.name}\t|\tTracked: {self.isTracked}\t|\tTransform: {self.transform}\t|\tCamera_positions: {self.camera_positions}'
 
 
+def connect_to_live_link():
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) 
+        s.connect((UDP_IP, UDP_PORT))
 
+        py_face = PyLiveLinkFace()    
+        return s, py_face
+    except Exception as e:
+        print(f"Error: {e}")
+        return None, None
 
 async def main():
     print("Camera Bank", camera_bank)
 
-    camera_bank.cameras["Cam1"].transform = Transform(np.array([0, 0, 0]), np.array([-20, 0, 200]))
-    camera_bank.cameras["Cam1"].transform = Transform(np.array([-CAMERA_OFFSET, 0, 0]), np.array([-20, 0, 160]))
+    s, py_face = connect_to_live_link()
+    last_connect_attempt = time.time()
+    disconnected = False
+
+    camera_bank.cameras["Cam1"].transform = Transform(np.array([CAMERA_OFFSET, 0, CAMERA_HEIGHT]), np.array([0, 0, 0]))
+    camera_bank.cameras["Cam2"].transform = Transform(np.array([0, 0, CAMERA_HEIGHT]), np.array([0, 0, 0]))
 
     # markers
-    head1 = TrackingMarker('head1', Transform(np.array([-50, 70, -20]), np.array([0, 0, 0])), [])
-    head2 = TrackingMarker('head2', Transform(np.array([-58, 70, -20]), np.array([0, 0, 0])), [])
-    head3 = TrackingMarker('head3', Transform(np.array([-64, 70, -27]), np.array([0, 0, 0])), [])
-    head4 = TrackingMarker('head4', Transform(np.array([-44, 70, -27]), np.array([0, 0, 0])), [])
+    head1 = TrackingMarker('head1', Transform(np.array([0, 0, 0]), np.array([0, 0, 0])), [])
+    head2 = TrackingMarker('head2', Transform(np.array([-1, 1, 4.8]), np.array([0, 0, 0])), [])
+    head3 = TrackingMarker('head3', Transform(np.array([-9, -2.5, 12]), np.array([0, 0, 0])), [])
+    head4 = TrackingMarker('head4', Transform(np.array([-14, -2.5, 12]), np.array([0, 0, 0])), [])
+    head5 = TrackingMarker('head5', Transform(np.array([-22.5, 1, 4.8]), np.array([0, 0, 0])), [])
+    head6 = TrackingMarker('head6', Transform(np.array([-23.5, 0, 0]), np.array([0, 0, 0])), [])
 
-    head1_2 = TrackingConnection(np.array([-8, 0, 0]), head1, head2)
-    head1_3 = TrackingConnection(np.array([-14, 0, -7]), head1, head3)
-    head1_4 = TrackingConnection(np.array([6, 0, -7]), head3, head4)
-    head2_3 = TrackingConnection(np.array([-6, 0, -7]), head2, head3)
-    head2_4 = TrackingConnection(np.array([14, 0, -7]), head4, head2)
-    head3_4 = TrackingConnection(np.array([-20, 0, 0]), head4, head1)
+    handL = TrackingMarker('handL', Transform(np.array([-60, 50, -20]), np.array([0, 0, 0])), [])
+    handR = TrackingMarker('handR', Transform(np.array([-40, 50, -20]), np.array([0, 0, 0])), [])
 
-    head1.add_connection(head1_2)
-    head1.add_connection(head1_3)
-    head1.add_connection(head1_4)
-    head2.add_connection(head1_2)
-    head2.add_connection(head2_3)
-    head2.add_connection(head2_4)
-    head3.add_connection(head1_3)
-    head3.add_connection(head2_3)
-    head3.add_connection(head3_4)
-    head4.add_connection(head1_4)
-    head4.add_connection(head2_4)
-    head4.add_connection(head3_4)
-
+    for marker in [head1, head2, head3, head4, head5, head6]:
+        for marker2 in [head1, head2, head3, head4, head5, head6]:
+            if marker != marker2:
+                marker.add_connection(TrackingConnection(marker2.transform.position - marker.transform.position, marker, marker2))
+                print(f"Added connection {marker.name} -> {marker2.name} | {marker2.transform.position - marker.transform.position}")
 
     # markers
     markers = {
         'head1': head1,
         'head2': head2,
         'head3': head3,
-        'head4': head4
+        'head4': head4,
+        'head5': head5,
+        'head6': head6,
+        'handL': handL,
+        'handR': handR
     }
 
     global calibrate
@@ -334,23 +347,18 @@ async def main():
             except Exception as e:
                 pass
 
+    handTracking = False
     while (1):
         for camera in camera_bank.cameras:
             ret, frame = camera_bank.cameras[camera].capture.read() # 576x960
-
-            if camera == "Cam1":
-                frame = cv2.rotate(frame, cv2.ROTATE_90_CLOCKWISE)
-            else:
-                frame = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
             
             if data_task is None and time.time() - last_data > DATA_INTERVAL:
                 data_task = fetch_anim_data()
 
             frame = cv2.flip(frame, 1)
 
-            lower = 70
             upper = 255
-            camera_bank.cameras[camera].mask = cv2.inRange(frame, (lower, lower, lower), (upper, upper, upper))
+            camera_bank.cameras[camera].mask = cv2.inRange(frame, (MARKER_THRESHOLD, MARKER_THRESHOLD, MARKER_THRESHOLD), (upper, upper, upper))
 
             contours, _ = cv2.findContours(camera_bank.cameras[camera].mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
@@ -364,36 +372,83 @@ async def main():
             dots.sort(key=lambda dot: dot[0])
 
             camera_bank.cameras[camera].mask = cv2.cvtColor(camera_bank.cameras[camera].mask, cv2.COLOR_GRAY2BGR) # put this here to draw on the mask in color
-
+            
             if calibrate:
                 try:
                     print("dots: ", dots)
                     print("camera index", camera_bank.cameras[camera].index, camera_bank.cameras[camera].name)
+                    if len(dots) >= 6:
+                        handTracking = True
+                        if camera == "Cam1":
+                            markers['head1'].isTracked = True
+                            markers['head1'].calibrate(camera, dots[1])
 
-                    if camera == "Cam1":
-                        markers['head1'].isTracked = True
-                        markers['head1'].calibrate(camera, dots[1])
+                            markers['head2'].isTracked = True
+                            markers['head2'].calibrate(camera, dots[2])
 
-                        markers['head2'].isTracked = True
-                        markers['head2'].calibrate(camera, dots[2])
+                            markers['head3'].isTracked = True
+                            markers['head3'].calibrate(camera, dots[0])
 
-                        markers['head3'].isTracked = True
-                        markers['head3'].calibrate(camera, dots[0])
+                            markers['head4'].isTracked = True
+                            markers['head4'].calibrate(camera, dots[3])
 
-                        markers['head4'].isTracked = True
-                        markers['head4'].calibrate(camera, dots[3])
+                            markers['handL'].isTracked = True
+                            markers['handL'].calibrate(camera, dots[4])
+                            markers['handR'].isTracked = True
+                            markers['handR'].calibrate(camera, dots[5])
+                        else:
+                            markers['head1'].isTracked = True
+                            markers['head1'].calibrate(camera, dots[2])
+
+                            markers['head2'].isTracked = True
+                            markers['head2'].calibrate(camera, dots[3])
+
+                            markers['head3'].isTracked = True
+                            markers['head3'].calibrate(camera, dots[1])
+
+                            markers['head4'].isTracked = True
+                            markers['head4'].calibrate(camera, dots[4])
+
+                            markers['handL'].isTracked = True
+                            markers['handL'].calibrate(camera, dots[0])
+                            markers['handR'].isTracked = True
+                            markers['handR'].calibrate(camera, dots[5])
                     else:
-                        markers['head1'].isTracked = True
-                        markers['head1'].calibrate(camera, dots[1])
+                        handTracking = False
+                        if camera == "Cam1":
+                            markers['head1'].isTracked = True
+                            markers['head1'].calibrate(camera, dots[1])
 
-                        markers['head2'].isTracked = True
-                        markers['head2'].calibrate(camera, dots[2])
+                            markers['head2'].isTracked = True
+                            markers['head2'].calibrate(camera, dots[2])
 
-                        markers['head3'].isTracked = True
-                        markers['head3'].calibrate(camera, dots[0])
+                            markers['head3'].isTracked = True
+                            markers['head3'].calibrate(camera, dots[0])
 
-                        markers['head4'].isTracked = True
-                        markers['head4'].calibrate(camera, dots[3])
+                            markers['head4'].isTracked = True
+                            markers['head4'].calibrate(camera, dots[3])
+
+                            markers['handL'].isTracked = True
+                            markers['handL'].calibrate(camera, [0,0,0])
+                            markers['handR'].isTracked = True
+                            markers['handR'].calibrate(camera, [0,0,0])
+                        else:
+                            markers['head1'].isTracked = True
+                            markers['head1'].calibrate(camera, dots[1])
+
+                            markers['head2'].isTracked = True
+                            markers['head2'].calibrate(camera, dots[2])
+
+                            markers['head3'].isTracked = True
+                            markers['head3'].calibrate(camera, dots[0])
+
+                            markers['head4'].isTracked = True
+                            markers['head4'].calibrate(camera, dots[3])
+                            
+                            markers['handL'].isTracked = True
+                            markers['handL'].calibrate(camera, [0,0,0])
+                            markers['handR'].isTracked = True
+                            markers['handR'].calibrate(camera, [0,0,0])
 
                 except:
                     print("Calibration failed")
@@ -415,13 +470,12 @@ async def main():
         for marker in markers:
             markers[marker].calculate_transform(camera_bank)
 
-
         for camera in camera_bank.cameras:
             for marker in markers:
                 if markers[marker].camera_positions.get(camera_bank.cameras[camera].name) is not None:
                     position = (markers[marker].camera_positions[camera_bank.cameras[camera].name][0], markers[marker].camera_positions[camera_bank.cameras[camera].name][1])
                     cv2.circle(camera_bank.cameras[camera].mask, position, 3, (00, 0, 255), -1)
-                    cv2.putText(camera_bank.cameras[camera].mask, markers[marker].name.split("ead")[1], position, cv2.FONT_HERSHEY_SIMPLEX, 0.75, (255, 255, 255), 1)
+                    cv2.putText(camera_bank.cameras[camera].mask, markers[marker].name, position, cv2.FONT_HERSHEY_SIMPLEX, 0.75, (255, 255, 255), 1)
                 for connection in markers[marker].connections:
                     cv2.line(camera_bank.cameras[camera].mask, markers[connection.marker1.name].camera_positions[camera_bank.cameras[camera].name], markers[connection.marker2.name].camera_positions[camera_bank.cameras[camera].name], (255, 255, 255), 1)
 
@@ -434,9 +488,6 @@ async def main():
         if len(head_positions) > 0:
             avg_position = [np.mean(head_positions[0::3]), np.mean(head_positions[1::3]), np.mean(head_positions[2::3])]
             
-            # Calculate face normal using cross product of vectors between markers
-            face_normal = np.cross(np.array(markers['head1'].transform.position) - np.array(markers['head2'].transform.position), np.array(markers['head1'].transform.position) - np.array(markers['head3'].transform.position))
-
             #calculate z and y rotation from head1 and head2
             z = math.atan2(markers['head1'].transform.position[0] - markers['head2'].transform.position[0], markers['head1'].transform.position[1] - markers['head2'].transform.position[1]) - math.pi/2
             # if z > math.pi:
@@ -468,22 +519,47 @@ async def main():
             last_data = time.time()
             anim_data = data
 
-        py_face.set_blendshape(FaceBlendShape.HeadYaw, head_transform.rotation[0])
-        py_face.set_blendshape(FaceBlendShape.HeadPitch, head_transform.rotation[1])
-        py_face.set_blendshape(FaceBlendShape.HeadRoll, head_transform.rotation[2])
-        py_face.set_blendshape(FaceBlendShape.HeadX, head_transform.position[0])
-        py_face.set_blendshape(FaceBlendShape.HeadY, head_transform.position[1])
-        py_face.set_blendshape(FaceBlendShape.HeadZ, head_transform.position[2])
-        if len(anim_data) > 1:
-            py_face.set_blendshape(FaceBlendShape.Character1Talking, 1.0 if anim_data["riot"]["isTalking"] else 0.0)
-            py_face.set_blendshape(FaceBlendShape.Character2Talking, 1.0 if anim_data["slimenetwork"]["isTalking"] else 0.0)
-            py_face.set_blendshape(FaceBlendShape.Character3Talking, 1.0 if anim_data["filian"]["isTalking"] else 0.0)
-            py_face.set_blendshape(FaceBlendShape.Character4Talking, 1.0 if anim_data["henyathegenius"]["isTalking"] else 0.0)
-        py_face.set_blendshape(FaceBlendShape.MouseX, mouse.position[0])
-        py_face.set_blendshape(FaceBlendShape.MouseY, mouse.position[1])
+        try:
+            if (disconnected):
+                if (time.time() - last_connect_attempt > 5):
+                    s, py_face = connect_to_live_link()
+                    last_connect_attempt = time.time()
+            else:
+                py_face.set_blendshape(FaceBlendShape.HeadYaw, head_transform.rotation[0])
+                py_face.set_blendshape(FaceBlendShape.HeadPitch, head_transform.rotation[1])
+                py_face.set_blendshape(FaceBlendShape.HeadRoll, head_transform.rotation[2])
+                py_face.set_blendshape(FaceBlendShape.HeadX, head_transform.position[0])
+                py_face.set_blendshape(FaceBlendShape.HeadY, head_transform.position[1])
+                py_face.set_blendshape(FaceBlendShape.HeadZ, head_transform.position[2])
+                if handTracking:
+                    print("hand tracking")
+                    py_face.set_blendshape(FaceBlendShape.handLeftX, markers['handL'].transform.position[0])
+                    py_face.set_blendshape(FaceBlendShape.handLeftY, markers['handL'].transform.position[1])
+                    py_face.set_blendshape(FaceBlendShape.handLeftZ, markers['handL'].transform.position[2])
+                    py_face.set_blendshape(FaceBlendShape.handRightX, markers['handR'].transform.position[0])
+                    py_face.set_blendshape(FaceBlendShape.handRightY, markers['handR'].transform.position[1])
+                    py_face.set_blendshape(FaceBlendShape.handRightZ, markers['handR'].transform.position[2])
+                else:
+                    py_face.set_blendshape(FaceBlendShape.handLeftX, 0)
+                    py_face.set_blendshape(FaceBlendShape.handLeftY, 0)
+                    py_face.set_blendshape(FaceBlendShape.handLeftZ, 0)
+                    py_face.set_blendshape(FaceBlendShape.handRightX, 0)
+                    py_face.set_blendshape(FaceBlendShape.handRightY, 0)
+                    py_face.set_blendshape(FaceBlendShape.handRightZ, 0)
+                if len(anim_data) > 1:
+                    py_face.set_blendshape(FaceBlendShape.Character1Talking, 1.0 if anim_data["riot"]["isTalking"] else 0.0)
+                    py_face.set_blendshape(FaceBlendShape.Character2Talking, 1.0 if anim_data["slimenetwork"]["isTalking"] else 0.0)
+                    # py_face.set_blendshape(FaceBlendShape.Character3Talking, 1.0 if anim_data["guest1"]["isTalking"] else 0.0)
+                    # py_face.set_blendshape(FaceBlendShape.Character4Talking, 1.0 if anim_data["guest2"]["isTalking"] else 0.0)
+                    # py_face.set_blendshape(FaceBlendShape.Character5Talking, 1.0 if anim_data["guest3"]["isTalking"] else 0.0)
+                    # py_face.set_blendshape(FaceBlendShape.Character6Talking, 1.0 if anim_data["guest4"]["isTalking"] else 0.0)
+                py_face.set_blendshape(FaceBlendShape.MouseX, mouse.position[0])
+                py_face.set_blendshape(FaceBlendShape.MouseY, mouse.position[1])
 
-       
-        s.sendall(py_face.encode())
+                s.sendall(py_face.encode())
+        except Exception as e:
+            print(f"Error: Disconnected {e}")
+            disconnected = True
 
         # if cv2.waitKey(1) & 0xFF == ord('q'):
         #         break

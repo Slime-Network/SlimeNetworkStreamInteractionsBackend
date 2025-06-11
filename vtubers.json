@@ -1,0 +1,716 @@
+[
+    {
+        "name": "Mori_Calliope",
+        "twitch": "moricalliope_hololiveen",
+        "twitter": "moricalliope",
+        "nicknames": ["Calli"]
+    },
+    {
+        "name": "Ninomae_Ina%27nis",
+        "twitch": "ninomaeinanis",
+        "twitter": "ninomaeinanis",
+        "nicknames": ["Ina"]
+    },
+    {
+        "name": "Takanashi_Kiara",
+        "twitch": "takanashikiara",
+        "twitter": "takanashikiara",
+        "nicknames": ["Kiara"]
+    },
+    {
+        "name": "Mococo_Abyssgard",
+        "twitch": "fuwamoco_en",
+        "twitter": "fuwamoco_en",
+        "nicknames": ["Mococo"]
+    },
+    {
+        "name": "Fuwawa_Abyssgard",
+        "twitch": "fuwawa_en",
+        "twitter": "fuwamoco_en",
+        "nicknames": ["Fuwawa"]
+    },
+    {
+        "name": "Shiori_Novella",
+        "twitch": "shiorinovella",
+        "twitter": "shiorinovella",
+        "nicknames": ["Shiori"]
+    },
+    {
+        "name": "Koseki_Bijou",
+        "twitch": "kosekibijou",
+        "twitter": "kosekibijou",
+        "nicknames": ["Biboo"]
+    },
+    {
+        "name": "Nerissa_Ravencroft",
+        "twitch": "nerissa_en",
+        "twitter": "nerissa_en",
+        "nicknames": ["Nerissa"]
+    },
+    {
+        "name": "Nyatasha_Nyanners",
+        "twitch": "nyanners",
+        "twitter": "NyanNyanners",
+        "nicknames": ["Nyan"]
+    },
+    {
+        "name": "Shylily",
+        "twitch": "shylilytwitch",
+        "twitter": "shylily",
+        "nicknames": ["Lily"]
+    },
+    {
+        "name": "Bao",
+        "twitch": "bao",
+        "twitter": "baovtuber",
+        "nicknames": ["Bao"]
+    },
+    {
+        "name": "Akuma_Nihmune",
+        "twitch": "nihmune",
+        "twitter": "nihmune",
+        "nicknames": ["numi"]
+    },
+    {
+        "name": "Trickywi",
+        "twitch": "trickywi",
+        "twitter": "trickywii",
+        "nicknames": ["Tricky"]
+    },
+    {
+        "name": "Sanagi_Yuzu",
+        "twitch": "yuzu",
+        "twitter": "sanagiyuzu",
+        "nicknames": ["Yuzu"]
+    },
+    {
+        "name": "Sinder",
+        "twitch": "sinder",
+        "twitter": "SinderVTuber",
+        "nicknames": ["Sinder"]
+    },
+    {
+        "name": "Snuffy",
+        "twitch": "snuffy",
+        "twitter": "snuffyowo",
+        "nicknames": ["Snuffy"]
+    },
+    {
+        "name": "Veibae",
+        "twitch": "vei",
+        "twitter": "Veibae",
+        "nicknames": ["Vei"]
+    },
+    {
+        "name": "Camila",
+        "twitch": "camila",
+        "twitter": "cumilq",
+        "nicknames": ["Camimi"]
+    },
+    {
+        "name": "Kson",
+        "twitch": "ksonsouchou",
+        "twitter": "ksononair",
+        "nicknames": ["Kson"]
+    },
+    {
+        "name": "Ironmouse",
+        "twitch": "ironmouse",
+        "twitter": "ironmouse",
+        "nicknames": ["Mousey"]
+    },
+    {
+        "name": "Zentreya",
+        "twitch": "zentreya",
+        "twitter": "zentreya",
+        "nicknames": ["Zen"]
+    },
+    {
+        "name": "Apricot",
+        "twitch": "Apricot",
+        "twitter": "LichVtuber",
+        "nicknames": ["Froot"]
+    },
+    {
+        "name": "Henya_the_Genius",
+        "twitch": "henyathegenius",
+        "twitter": "henyathegenius",
+        "nicknames": ["Henya"]
+    },
+    {
+        "name": "Haruka_Karibu",
+        "twitch": "harukakaribu",
+        "twitter": "haruka_karibu",
+        "nicknames": ["Haruka"]
+    },
+    {
+        "name": "GEEGA",
+        "twitch": "GEEGA",
+        "twitter": "GeneralGEEGA",
+        "nicknames": ["GEEGA"]
+    },
+    {
+        "name": "Projekt_Melody",
+        "twitch": "projektmelody",
+        "twitter": "ProjektMelody",
+        "nicknames": ["Melody"]
+    },
+    {
+        "name": "Kuro_Kurenai",
+        "twitch": "K9KURO",
+        "twitter": "K9_KURO",
+        "nicknames": ["Kuro"]
+    },
+    {
+        "name": "Michi_Mochievee",
+        "twitch": "michimochievee",
+        "twitter": "MichiMochievee",
+        "nicknames": ["Michi"]
+    },
+    {
+        "name": "Matara_Kan",
+        "twitch": "MataraKan",
+        "twitter": "MataraKan",
+        "nicknames": ["Mata"]
+    },
+    {
+        "name": "Hime_Hajime",
+        "twitch": "hajime",
+        "twitter": "HimeHajime_VSJ",
+        "nicknames": ["Hime"]
+    },
+    {
+        "name": "AmaLee",
+        "twitch": "leeandlie",
+        "twitter": "LeeandLie",
+        "nicknames": ["AmaLee"]
+    },
+    {
+        "name": "Vedal",
+        "twitch": "vedal987",
+        "twitter": "Vedal987",
+        "nicknames": ["Vedal"]
+    },
+    {
+        "name": "Neuro-sama",
+        "twitch": "Neurosama",
+        "twitter": "NeurosamaAI",
+        "nicknames": ["Neuro"]
+    },
+    {
+        "name": "Anny",
+        "twitch": "anny",
+        "twitter": "annytf",
+        "nicknames": ["Anny"]
+    },
+    {
+        "name": "Filian",
+        "twitch": "filian",
+        "twitter": "filianislost",
+        "nicknames": ["Filian"]
+    },
+    {
+        "name": "Chibidoki",
+        "twitch": "chibidoki",
+        "twitter": "Chibidokii",
+        "nicknames": ["Chibi"]
+    },
+    {
+        "name": "Nyana_Banyana",
+        "twitch": "nyanabanyanavt",
+        "twitter": "Nyanabanyana",
+        "nicknames": ["Nyana"]
+    },
+    {
+        "name": "Arielle",
+        "twitch": "Arielle",
+        "twitter": "Arielle_VT",
+        "nicknames": ["Arielle"]
+    },
+    {
+        "name": "Koko_D._Nuts",
+        "twitch": "KokoNuts",
+        "twitter": "KokoNutsVT",
+        "nicknames": ["KokoNuts"]
+    },
+    {
+        "name": "Lucy_Pyre",
+        "twitch": "lucypyre",
+        "twitter": "LucyPyre_",
+        "nicknames": ["Lucy"]
+    },
+    {
+        "name": "MariMari",
+        "twitch": "marimari_en",
+        "twitter": "MARIMARI_EN",
+        "nicknames": ["Mari"]
+    },
+    {
+        "name": "Captain_Hannah",
+        "twitch": "hannahhyrule",
+        "twitter": "hannahvtuber",
+        "nicknames": ["Hannah"]
+    },
+    {
+        "name": "Saiiren",
+        "twitch": "saiiren",
+        "twitter": "xsaiiren",
+        "nicknames": ["Saiiren"]
+    },
+    {
+        "name": "Saruei",
+        "twitch": "saruei",
+        "twitter": "saruei_",
+        "nicknames": ["Saruei"]
+    },
+    {
+        "name": "SquChan",
+        "twitch": "squchan",
+        "twitter": "squchan",
+        "nicknames": ["SquChan"]
+    },
+    {
+        "name": "Akumi_(Yoclesh)",
+        "twitch": "yoclesh",
+        "twitter": "yoclesh",
+        "nicknames": ["yoclesh"]
+    },
+    {
+        "name": "FeFe",
+        "twitch": "Fefe",
+        "twitter": "CovfefeChan",
+        "nicknames": ["FeFe"]
+    },
+    {
+        "name": "Megalodon",
+        "twitch": "megalodonvt",
+        "twitter": "MegalodonVT",
+        "nicknames": ["Mega"]
+    },
+    {
+        "name": "Toma",
+        "twitch": "toma",
+        "twitter": "sliceoftoma",
+        "nicknames": ["Toma"]
+    },
+    {
+        "name": "Cha_Cha,_Your_Vmom",
+        "twitch": "Chachayourvmom",
+        "twitter": "chachayourvmom",
+        "nicknames": ["Chacha"]
+    },
+    {
+        "name": "Fallenshadow",
+        "twitch": "fallenshadow",
+        "twitter": "fallenshadow_YT",
+        "nicknames": ["Shondo"]
+    },
+    {
+        "name": "SmugAlana",
+        "twitch": "smugalana",
+        "twitter": "smugalana",
+        "nicknames": ["Alana"]
+    },
+    {
+        "name": "Fraiki",
+        "twitch": "fraiki",
+        "twitter": "fraiki",
+        "nicknames": ["Fraiki"]
+    },
+    {
+        "name": "FroggyLoch",
+        "twitch": "froggyloch",
+        "twitter": "FroggyLoch",
+        "nicknames": ["Froggy"]
+    },
+    {
+        "name": "Meicha",
+        "twitch": "meicha",
+        "twitter": "MeichaFox",
+        "nicknames": ["Mei"]
+    },
+    {
+        "name": "Ellie_Minibot",
+        "twitch": "Ellie_Minibot",
+        "twitter": "dumb_lil_robot",
+        "nicknames": ["Ellie"]
+    },
+    {
+        "name": "CerberVT",
+        "twitch": "cerbervt",
+        "twitter": "cerberVT",
+        "nicknames": ["Cerber"]
+    },
+    {
+        "name": "Senzawa",
+        "twitch": "senzawa",
+        "twitter": "sensenzawa",
+        "nicknames": ["Senzawa"]
+    },
+    {
+        "name": "Buffpup",
+        "twitch": "buffpup",
+        "twitter": "Buffpup_",
+        "nicknames": ["Buffpup"]
+    },
+    {
+        "name": "Himemiya_Rie",
+        "twitch": "himemiyarie",
+        "twitter": "himemiyarie",
+        "nicknames": ["Hime"]
+    },
+    {
+        "name": "Kirana_Yonome",
+        "twitch": "kiranayonome",
+        "twitter": "KiranaYonome",
+        "nicknames": ["Kira"]
+    },
+    {
+        "name": "Kaneko_Lumi",
+        "twitch": "kanekolumi",
+        "twitter": "Kaneko_Lumi",
+        "nicknames": ["Lumi"]
+    },
+    {
+        "name": "Lia",
+        "twitch": "asheliarinkou",
+        "twitter": "rinkouashelia",
+        "nicknames": ["Lia"]
+    },
+    {
+        "name": "Rima_Evenstar",
+        "twitch": "rima_evenstar",
+        "twitter": "RimaEvenstar",
+        "nicknames": ["Rima"]
+    },
+    {
+        "name": "CyYu",
+        "twitch": "cyyuvtuber",
+        "twitter": "CyYuVTuber",
+        "nicknames": ["CyYu"]
+    },
+    {
+        "name": "PorcelainMaid",
+        "twitch": "porcelainmaid",
+        "twitter": "PorcelainMaid",
+        "nicknames": ["Jowol"]
+    },
+    {
+        "name": "Kureiji_Ollie",
+        "twitch": "kureijiollie",
+        "twitter": "kureijiollie",
+        "nicknames": ["Ollie"]
+    },
+    {
+        "name": "Komachi_Panko",
+        "twitch": "komachipanko",
+        "twitter": "komachipanko",
+        "nicknames": ["Panko"]
+    },
+    {
+        "name": "Ebiko_Amai",
+        "twitch": "ebiko",
+        "twitter": "EbikoVtuber",
+        "nicknames": ["Ebi"]
+    },
+    {
+        "name": "Sugi_Aoki",
+        "twitch": "sugiaoki",
+        "twitter": "sugiaoki",
+        "nicknames": ["Sugi"]
+    },
+    {
+        "name": "Layna_Lazar",
+        "twitch": "LaynaLazar",
+        "twitter": "LaynaLazar",
+        "nicknames": ["Layna"]
+    },
+    {
+        "name": "Rye",
+        "twitch": "ryeisbread",
+        "twitter": "BreadIsRye",
+        "nicknames": ["Rye"]
+    },
+    {
+        "name": "Fream",
+        "twitch": "Fr34m",
+        "twitter": "FREAM",
+        "nicknames": ["Fream"]
+    },
+    {
+        "name": "Sakura_Miko",
+        "twitch": "sakuramiko_hololive",
+        "twitter": "sakuramiko35",
+        "nicknames": ["Miko-chi"]
+    },
+    {
+        "name": "Vexoria_the_Sun_Eater",
+        "twitch": "vexoria_the_suneater",
+        "twitter": "VexTheSunEater",
+        "nicknames": ["Vex"]
+    },
+    {
+        "name": "GrimmiVT",
+        "twitch": "Grimmi",
+        "twitter": "GrimmiVT",
+        "nicknames": ["Grimmi"]
+    },
+    {
+        "name": "AZKi",
+        "twitch": "AZKi_VDiVA",
+        "twitter": "AZKi_VDiVA",
+        "nicknames": ["AZKi"]
+    },
+    {
+        "name": "Inugami_Korone",
+        "twitch": "inugamikorone",
+        "twitter": "inugamikorone",
+        "nicknames": ["Korone"]
+    },
+    {
+        "name": "Ayunda_Risu",
+        "twitch": "ayunda_risu",
+        "twitter": "ayunda_risu",
+        "nicknames": ["Risu"]
+    },
+    {
+        "name": "Foxplushy",
+        "twitch": "foxplushy",
+        "twitter": "foxplushy",
+        "nicknames": ["Foxy"]
+    },
+    {
+        "name": "Airani_Iofifteen",
+        "twitch": "airaniiofifteen",
+        "twitter": "airaniiofifteen",
+        "nicknames": ["Iofi"]
+    },
+    {
+        "name": "PastaroniRavioli",
+        "twitch": "pastaroniravioli",
+        "twitter": "pastaravioli",
+        "nicknames": ["Pasta"]
+    },
+    {
+        "name": "Cecilia_Immergreen",
+        "twitch": "Cecilia_Immergreen",
+        "twitter": "ceciliaimgreen",
+        "nicknames": ["Cecilia"]
+    },
+    {
+        "name": "Akatsuki_Hotaru",
+        "twitch": "akatsukidhotaru",
+        "twitter": "AkatsukiDHotaru",
+        "nicknames": ["Hotaru"]
+    },
+    {
+        "name": "AlienMixture",
+        "twitch": "alienmixture",
+        "twitter": "alien_mixture",
+        "nicknames": ["Ali"]
+    },
+    {
+        "name": "Hestia_Happiness",
+        "twitch": "HestiaHappiness",
+        "twitter": "HestiaHappiness",
+        "nicknames": ["Hestia"]
+    },
+    {
+        "name": "Synical",
+        "twitch": "synicalbunni",
+        "twitter": "synicalbeanical",
+        "nicknames": ["Synical"]
+    },
+    {
+        "name": "Demenishki",
+        "twitch": "deme",
+        "twitter": "demenishki",
+        "nicknames": ["Deme"]
+    },
+    {
+        "name": "Punkalopi",
+        "twitch": "punkalopi",
+        "twitter": "punkalopi",
+        "nicknames": ["Punkalopi"]
+    },
+    {
+        "name": "Amanogawa_Shiina",
+        "twitch": "amanogawashiina",
+        "twitter": "AmanogawaShiina",
+        "nicknames": ["Shiina"]
+    },
+    {
+        "name": "Marikyuun",
+        "twitch": "marikyuun",
+        "twitter": "marikyuun",
+        "nicknames": ["Mari"]
+    },
+    {
+        "name": "Yutori_Peke",
+        "twitch": "pekeispeak",
+        "twitter": "PekeIsPeak",
+        "nicknames": ["Peke"]
+    },
+    {
+        "name": "Yomi_Quinnley",
+        "twitch": "yomiquinnley",
+        "twitter": "YomiQuinnley",
+        "nicknames": ["Yomi"]
+    },
+    {
+        "name": "CottontailVA",
+        "twitch": "CottontailVA",
+        "twitter": "CottontailVA",
+        "nicknames": ["Cotton"]
+    },
+    {
+        "name": "Emirichu",
+        "twitch": "Emirichuyt",
+        "twitter": "EmirichuYT",
+        "nicknames": ["Emi"]
+    },
+    {
+        "name": "Aquwa",
+        "twitch": "aquwa",
+        "twitter": "Aquwa_yt",
+        "nicknames": ["Aquwa"]
+    },
+    {
+        "name": "Ricky",
+        "twitch": "rickyvt",
+        "twitter": "RickyVT_",
+        "nicknames": ["Ricky"]
+    },
+    {
+        "name": "Dooby3D",
+        "twitch": "dooby3D",
+        "twitter": "dooby3D",
+        "nicknames": ["Dooby"]
+    },
+    {
+        "name": "Okamoto_Nagi",
+        "twitch": "nagisekaied",
+        "twitter": "NagIsekaied",
+        "nicknames": ["Nagi"]
+    },
+    {
+        "name": "Rekson",
+        "twitch": "reksongames",
+        "twitter": "reksongames",
+        "nicknames": ["Rekson"]
+    },
+    {
+        "name": "MOTHERv3",
+        "twitch": "motherv3",
+        "twitter": "MOTHER_v3",
+        "nicknames": ["MOTHER"]
+    },
+    {
+        "name": "El_XoX",
+        "twitch": "el_xox",
+        "twitter": "El_XoX34",
+        "nicknames": ["El"]
+    },
+    {
+        "name": "Kobo_Kanaeru",
+        "twitch": "kobokanaeru",
+        "twitter": "kobokanaeru",
+        "nicknames": ["Kobo"]
+    },
+    {
+        "name": "Silvervale",
+        "twitch": "silvervale",
+        "twitter": "_Silvervale_",
+        "nicknames": ["Silver"]
+    },
+    {
+        "name": "Lumi",
+        "twitch": "lumituber",
+        "twitter": "lumituber",
+        "nicknames": ["Lumi"]
+    },
+    {
+        "name": "Tenma_Maemi",
+        "twitch": "tenma",
+        "twitter": "tenmamaemi",
+        "nicknames": ["Tenma"]
+    },
+    {
+        "name": "Pipkin_Pippa",
+        "twitch": "Pippa",
+        "twitter": "pipkinpippa",
+        "nicknames": ["Pippa"]
+    },
+    {
+        "name": "Juniper_Actias",
+        "twitch": "juniperactias",
+        "twitter": "egocider",
+        "nicknames": ["Juniper"]
+    },
+    {
+        "name": "Obkatiekat",
+        "twitch": "obkatiekat",
+        "twitter": "obkatiekat",
+        "nicknames": ["Katie"]
+    },
+    {
+        "name": "Vienna",
+        "twitch": "vienna",
+        "twitter": "viennavtuber",
+        "nicknames": ["Vienna"]
+    },
+    {
+        "name": "Rosedoodle",
+        "twitch": "rosedoodle",
+        "twitter": "rosedoodles",
+        "nicknames": ["Rose"]
+    },
+    {
+        "name": "Ouro_Kronii",
+        "twitch": "ourokronii",
+        "twitter": "ourokronii",
+        "nicknames": ["Kronii"]
+    },
+    {
+        "name": "Houshou_Marine",
+        "twitch": "houshoumarine",
+        "twitter": "houshoumarine",
+        "nicknames": ["Marine"]
+    },
+    {
+        "name": "Girl_dm",
+        "twitch": "girl_dm_",
+        "twitter": "girl_dm_",
+        "nicknames": ["DM"]
+    },
+    {
+        "name": "OniGiri",
+        "twitch": "OniGiri",
+        "twitter": "OniGiriEn_",
+        "nicknames": ["Giri"]
+    },
+    {
+        "name": "Merryweather",
+        "twitch": "Merryweather",
+        "twitter": "Merrydawg",
+        "nicknames": ["Merry"]
+    },
+    {
+        "name": "Hakos_Baelz",
+        "twitch": "hakosbaelz",
+        "twitter": "hakosbaelz",
+        "nicknames": ["Bae"]
+    },
+    {
+        "name": "Miilkywayz",
+        "twitch": "Milky",
+        "twitter": "Miilkywayz",
+        "nicknames": ["Milky"]
+    },
+    {
+        "name": "Ai_Candii",
+        "twitch": "aicandii",
+        "twitter": "aicandii",
+        "nicknames": ["Candii"]
+    }
+]

@@ -1,0 +1,1 @@
+python MeloTTS/melo/preprocess_text.py --metadata VoiceTraining/data/voices/full.list --config_path VoiceTraining/config.json

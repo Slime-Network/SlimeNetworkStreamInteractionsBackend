@@ -11,6 +11,9 @@ processed/
 music/
 VoiceTraining/
 db/
+logs/
+test_images/
+config.json
 
 # Distribution / packaging
 .Python

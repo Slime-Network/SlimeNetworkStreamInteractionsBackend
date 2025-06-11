@@ -6,6 +6,7 @@ import struct
 from typing import Tuple
 import datetime
 from timecode import Timecode
+import uuid
 
 class FaceBlendShape(Enum):
     HeadYaw = 1
@@ -20,6 +21,14 @@ class FaceBlendShape(Enum):
     Character4Talking = 10
     MouseX = 11
     MouseY = 12
+    handLeftX = 13
+    handLeftY = 14
+    handLeftZ = 15
+    handRightX = 16
+    handRightY = 17
+    handRightZ = 18
+    Character5Talking = 19
+    Character6Talking = 20
 
 
 class PyLiveLinkFace:
