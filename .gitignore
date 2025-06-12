@@ -13,6 +13,7 @@ VoiceTraining/
 db/
 logs/
 test_images/
+user_token.json
 config.json
 
 # Distribution / packaging
